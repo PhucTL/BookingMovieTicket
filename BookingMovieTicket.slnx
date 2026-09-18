@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BookingMovieTicket_API/BookingMovieTicket_API.csproj" />
+  <Project Path="BookingMovieTicket_Repository/BookingMovieTicket_Repository.csproj" />
+  <Project Path="BookingMovieTicket_Service/BookingMovieTicket_Service.csproj" />
+</Solution>

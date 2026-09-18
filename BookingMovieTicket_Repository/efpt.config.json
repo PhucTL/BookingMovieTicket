@@ -1,0 +1,94 @@
+﻿{
+   "CodeGenerationMode": 6,
+   "ContextClassName": "BookingMovieTicketSystemDbContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "IrregularWords": null,
+   "MinimumProductVersion": "2.6.1706",
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PluralRules": null,
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "BookingMovieTicket_Repository",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "SingularRules": null,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "public.booking",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.booking_seat",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.event",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.payment",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.seat",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.seat_map",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.showtime",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.showtime_seat",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.staff_venue",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.user",
+         "ObjectType": 0
+      },
+      {
+         "Name": "public.venue",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false,
+   "UseTypedTvpParameters": true
+}
