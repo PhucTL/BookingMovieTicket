@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="BookingMovieTicket.Contracts/BookingMovieTicket.Contracts.csproj" Id="18c10398-f915-48d1-ae09-058989409ac5" />
   <Project Path="BookingMovieTicket_API/BookingMovieTicket_API.csproj" />
   <Project Path="BookingMovieTicket_Repository/BookingMovieTicket_Repository.csproj" />
   <Project Path="BookingMovieTicket_Service/BookingMovieTicket_Service.csproj" />

@@ -1,6 +1,31 @@
 @BookingMovieTicket_API_HostAddress = http://localhost:5269
 
-GET {{BookingMovieTicket_API_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Đăng ký tài khoản (Register)
+POST {{BookingMovieTicket_API_HostAddress}}/api/auth/register
+Content-Type: application/json
 
-###
+{
+  "username": "phuc123",
+  "email": "phuctl@example.com",
+  "password": "Password123@",
+  "fullName": "Le Thi Phuc"
+}
+
+### 2. Đăng nhập bằng Username (Login)
+POST {{BookingMovieTicket_API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "phuc123",
+  "password": "Password123@"
+}
+
+### 3. Đăng nhập bằng Google (Google Login)
+POST {{BookingMovieTicket_API_HostAddress}}/api/auth/google-login
+Content-Type: application/json
+
+{
+  "email": "phuctl@example.com",
+  "fullName": "Le Thi Phuc Google"
+}
+
