@@ -1,6 +1,6 @@
 using System;
 
-namespace BookingMovieTicket_Service.Authentication;
+namespace BookingMovieTicket_Service.Authentication.JWT;
 
 public interface IJwtService
 {

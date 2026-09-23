@@ -7,8 +7,20 @@ namespace BookingMovieTicket_Service.Authentication
 {
     public interface IAuthenService
     {
-        Task<ApiResponse<RegisterResponse>> RegisterAsync(RegisterRequest request);
-        Task<ApiResponse<AuthResponse>> LoginAsync(LoginRequest request);
-        Task<ApiResponse<AuthResponse>> GoogleLoginAsync(GoogleLoginRequest request);
+        // 1. Đăng ký tài khoản
+        Task<ApiResponse<string>> RegisterAsync(RegisterRequest request);
+
+        // 2. Đăng nhập tài khoản
+        Task<ApiResponse<string>> LoginAsync(LoginRequest request);
+
+        // 3. Xác thực OTP 
+        Task<ApiResponse<object>> VerifyOtpAsync(VerifyOtpRequest request);
+
+        // 4. Gửi lại mã OTP
+        Task<ApiResponse<string>> ResendOtpAsync(ResendOtpRequest request);
+
+        // 5. Đăng nhập Google
+        Task<ApiResponse<LoginResponse>> GoogleLoginAsync(GoogleLoginRequest request);
     }
 }
+

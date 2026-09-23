@@ -20,16 +20,16 @@ namespace BookingMovieTicket_API.Controllers
         }
 
         /// <summary>
-        /// Đăng ký tài khoản người dùng mới (sử dụng Username, Email, Password, FullName)
+        /// 1. Đăng ký tài khoản
         /// </summary>
         [HttpPost("register")]
-        [ProducesResponseType(typeof(ApiResponse<RegisterResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<RegisterResponse>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResult("Dữ liệu không hợp lệ."));
+                return BadRequest(ApiResponse<string>.ErrorResult("Dữ liệu không hợp lệ."));
             }
 
             var result = await _authenService.RegisterAsync(request);
@@ -42,16 +42,16 @@ namespace BookingMovieTicket_API.Controllers
         }
 
         /// <summary>
-        /// Đăng nhập tài khoản truyền thống (sử dụng Username và Password)
+        /// 2. Đăng nhập tài khoản
         /// </summary>
         [HttpPost("login")]
-        [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ApiResponse<AuthResponse>.ErrorResult("Dữ liệu không hợp lệ."));
+                return BadRequest(ApiResponse<string>.ErrorResult("Dữ liệu không hợp lệ."));
             }
 
             var result = await _authenService.LoginAsync(request);
@@ -64,16 +64,60 @@ namespace BookingMovieTicket_API.Controllers
         }
 
         /// <summary>
-        /// Đăng nhập tài khoản qua Google (sử dụng Email từ Google)
+        /// 3. Xác thực mã OTP
+        /// </summary>
+        [HttpPost("verify-otp")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResult("Dữ liệu không hợp lệ."));
+            }
+
+            var result = await _authenService.VerifyOtpAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 4. Gửi lại mã OTP 
+        /// </summary>
+        [HttpPost("resend-otp")]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResult("Dữ liệu không hợp lệ."));
+            }
+
+            var result = await _authenService.ResendOtpAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 5. Đăng nhập tài khoản qua Google
         /// </summary>
         [HttpPost("google-login")]
-        [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<LoginResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<LoginResponse>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ApiResponse<AuthResponse>.ErrorResult("Dữ liệu không hợp lệ."));
+                return BadRequest(ApiResponse<LoginResponse>.ErrorResult("Dữ liệu không hợp lệ."));
             }
 
             var result = await _authenService.GoogleLoginAsync(request);
@@ -86,7 +130,7 @@ namespace BookingMovieTicket_API.Controllers
         }
 
         /// <summary>
-        /// 4. Lấy thông tin tài khoản hiện tại (Yêu cầu gửi Bearer Token qua Header Authorization)
+        /// 6. Lấy thông tin tài khoản hiện tại (Yêu cầu gửi Bearer Token qua Header Authorization)
         /// </summary>
         [HttpGet("profile")]
         [Authorize]

@@ -3,10 +3,10 @@ using System.Text.Json.Serialization;
 
 namespace BookingMovieTicket.Contracts.DTOs.Authentication.Response;
 
-public class AuthResponse
+public class LoginResponse
 {
     [JsonPropertyOrder(1)]
-    public string Token { get; set; } = string.Empty;
+    public string? Token { get; set; } = string.Empty;
 
     [JsonPropertyOrder(2)]
     public string? RefreshToken { get; set; }

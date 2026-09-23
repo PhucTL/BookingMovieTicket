@@ -20,7 +20,7 @@ namespace BookingMovieTicket_Repository.Repositories
         }
 
         /// <summary>
-        /// Tạo mới người dùng phục vụ chức năng đăng ký (Register)
+        /// Tạo mới người (Register)
         /// </summary>
         public async Task<User> CreateUserAsync(User user)
         {
@@ -45,7 +45,7 @@ namespace BookingMovieTicket_Repository.Repositories
         }
 
         /// <summary>
-        /// Tìm người dùng theo username phục vụ chức năng đăng nhập truyền thống (Login)
+        /// Tìm người dùng theo username (Login)
         /// </summary>
         public async Task<User?> GetUserByUsernameAsync(string username)
         {
@@ -62,7 +62,7 @@ namespace BookingMovieTicket_Repository.Repositories
         }
 
         /// <summary>
-        /// Tìm người dùng theo Email (đăng nhập Google/Social hoặc kiểm tra email tồn tại)
+        /// Tìm người dùng theo Email
         /// </summary>
         public async Task<User?> GetUserByEmailAsync(string email)
         {

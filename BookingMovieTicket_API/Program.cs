@@ -4,6 +4,9 @@ using BookingMovieTicket_Repository.DBContext;
 using BookingMovieTicket_Repository.Interfaces;
 using BookingMovieTicket_Repository.Repositories;
 using BookingMovieTicket_Service.Authentication;
+using BookingMovieTicket_Service.Authentication.Email;
+using BookingMovieTicket_Service.Authentication.JWT;
+using BookingMovieTicket_Service.Authentication.OTP;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -26,7 +29,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
-// 3. Đăng ký các Services (Tầng nghiệp vụ)
+// 3. Đăng ký MemoryCache & các Services (Tầng nghiệp vụ)
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthenService, AuthenService>();
 
