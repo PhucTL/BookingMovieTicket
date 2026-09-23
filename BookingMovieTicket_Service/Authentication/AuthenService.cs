@@ -174,7 +174,31 @@ namespace BookingMovieTicket_Service.Authentication
                 return ApiResponse<object>.SuccessResult(loginResponse, "Đăng nhập thành công.");
             }
 
-            return ApiResponse<object>.ErrorResult("Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng thực hiện đăng ký hoặc đăng nhập lại.");
+            // 3. Kiểm tra nếu là OTP Quên mật khẩu (Forgot Password)
+            var pendingForgot = _otpService.GetPendingForgotPassword(normalizedEmail);
+            if (pendingForgot != null)
+            {
+                if (!_otpService.ValidateForgotPasswordOtp(normalizedEmail, request.Otp))
+                {
+                    return ApiResponse<object>.ErrorResult("Mã OTP không chính xác.");
+                }
+
+                _otpService.RemoveForgotPasswordOtp(normalizedEmail);
+
+                // Lưu session cho phép đặt lại mật khẩu trong 10 phút
+                var resetToken = _otpService.SavePasswordResetSession(normalizedEmail, 10);
+
+                var forgotResponse = new VerifyOtpForgotPasswordResponse
+                {
+                    Email = normalizedEmail,
+                    ResetToken = resetToken,
+                    Message = "Xác thực OTP thành công. Vui lòng tiến hành đặt lại mật khẩu mới tại API reset-password."
+                };
+
+                return ApiResponse<object>.SuccessResult(forgotResponse, "Xác thực OTP thành công. Bạn có thể tiến hành đặt lại mật khẩu mới.");
+            }
+
+            return ApiResponse<object>.ErrorResult("Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng thực hiện đăng ký, đăng nhập hoặc yêu cầu quên mật khẩu lại.");
         }
 
         // 4. Gửi lại mã OTP
@@ -207,6 +231,18 @@ namespace BookingMovieTicket_Service.Authentication
                 var newOtp = _otpService.GenerateOtp();
                 _otpService.SaveLoginOtp(pendingLogin.User, newOtp, 5);
                 await _emailService.SendOtpEmailAsync(normalizedEmail, newOtp, 5, "đăng nhập");
+                return ApiResponse<string>.SuccessResult(
+                    $"Mã OTP mới đã được gửi về email {normalizedEmail}. Mã có hiệu lực trong 5 phút.",
+                    "Gửi lại OTP thành công.");
+            }
+
+            // Kiểm tra có yêu cầu Quên mật khẩu chờ duyệt không
+            var pendingForgot = _otpService.GetPendingForgotPassword(normalizedEmail);
+            if (pendingForgot != null)
+            {
+                var newOtp = _otpService.GenerateOtp();
+                _otpService.SaveForgotPasswordOtp(pendingForgot.User, newOtp, 5);
+                await _emailService.SendOtpEmailAsync(normalizedEmail, newOtp, 5, "quên mật khẩu");
                 return ApiResponse<string>.SuccessResult(
                     $"Mã OTP mới đã được gửi về email {normalizedEmail}. Mã có hiệu lực trong 5 phút.",
                     "Gửi lại OTP thành công.");
@@ -250,6 +286,97 @@ namespace BookingMovieTicket_Service.Authentication
             };
 
             return ApiResponse<LoginResponse>.SuccessResult(authResponse, "Đăng nhập Google thành công.");
+        }
+
+        // 6. Quên mật khẩu - kiểm tra email và tự động gửi mã OTP
+        public async Task<ApiResponse<string>> ForgotPasswordAsync(ForgotPasswordRequest request)
+        {
+            var normalizedEmail = request.Email.Trim().ToLower();
+
+            // Kiểm tra tài khoản có tồn tại trong hệ thống không
+            var user = await _unitOfWork.AuthenRepository.GetUserByEmailAsync(normalizedEmail);
+            if (user == null)
+            {
+                return ApiResponse<string>.ErrorResult("Email này không tồn tại trong hệ thống.");
+            }
+
+            // Kiểm tra cooldown giãn cách 60 giây chống spam gửi liên tục
+            if (!_otpService.CanResendOtp(normalizedEmail, out var remainingSeconds))
+            {
+                return ApiResponse<string>.ErrorResult($"Vui lòng chờ {remainingSeconds} giây trước khi yêu cầu gửi lại mã OTP.");
+            }
+
+            // Sinh mã OTP 6 số ngẫu nhiên
+            var otp = _otpService.GenerateOtp();
+
+            // Lưu thông tin chờ OTP vào MemoryCache (5 phút)
+            _otpService.SaveForgotPasswordOtp(user, otp, 5);
+
+            // Gửi OTP qua Gmail
+            await _emailService.SendOtpEmailAsync(normalizedEmail, otp, 5, "quên mật khẩu");
+
+            return ApiResponse<string>.SuccessResult(
+                $"Mã OTP xác thực đã được gửi về email {normalizedEmail}. Mã có hiệu lực trong vòng 5 phút.",
+                "Gửi mã OTP thành công. Vui lòng kiểm tra hộp thư email.");
+        }
+
+        // 7. Đặt lại mật khẩu mới cho Forgot Password sau khi đã xác thực OTP thành công
+        public async Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            var normalizedEmail = request.Email.Trim().ToLower();
+
+            // Kiểm tra phiên xác thực OTP có hợp lệ không (đã verify OTP trong vòng 10 phút)
+            if (!_otpService.ValidateResetSession(normalizedEmail, request.ResetToken))
+            {
+                return ApiResponse<string>.ErrorResult("Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại từ bước Quên mật khẩu và Xác thực OTP.");
+            }
+
+            // Tìm user trong DB
+            var user = await _unitOfWork.AuthenRepository.GetUserByEmailAsync(normalizedEmail);
+            if (user == null)
+            {
+                return ApiResponse<string>.ErrorResult("Không tìm thấy thông tin tài khoản.");
+            }
+
+            // Cập nhật mật khẩu mới đã băm bằng BCrypt
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _unitOfWork.AuthenRepository.UpdateUserAsync(user);
+
+            // Xóa phiên reset mật khẩu để không thể tái sử dụng
+            _otpService.RemoveResetSession(normalizedEmail);
+
+            return ApiResponse<string>.SuccessResult(
+                "Mật khẩu của bạn đã được đặt lại thành công. Bạn có thể sử dụng mật khẩu mới để đăng nhập.",
+                "Đặt lại mật khẩu thành công.");
+        }
+
+        // 8. Đổi mật khẩu tài khoản
+        public async Task<ApiResponse<string>> ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
+        {
+            var user = await _unitOfWork.AuthenRepository.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                return ApiResponse<string>.ErrorResult("Không tìm thấy thông tin tài khoản để đổi mật khẩu.");
+            }
+
+            // Kiểm tra mật khẩu cũ
+            if (!BCrypt.Net.BCrypt.Verify(request.OldPassword, user.PasswordHash))
+            {
+                return ApiResponse<string>.ErrorResult("Mật khẩu cũ không chính xác.");
+            }
+
+            // Kiểm tra mật khẩu mới không được trùng mật khẩu cũ
+            if (BCrypt.Net.BCrypt.Verify(request.NewPassword, user.PasswordHash))
+            {
+                return ApiResponse<string>.ErrorResult("Mật khẩu mới không được trùng với mật khẩu cũ.");
+            }
+
+            // Cập nhật mật khẩu mới
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _unitOfWork.AuthenRepository.UpdateUserAsync(user);
+
+            return ApiResponse<string>.SuccessResult("Đổi mật khẩu thành công.", "Thành công.");
         }
     }
 }

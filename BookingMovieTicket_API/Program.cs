@@ -8,9 +8,11 @@ using BookingMovieTicket_Service.Authentication.Email;
 using BookingMovieTicket_Service.Authentication.JWT;
 using BookingMovieTicket_Service.Authentication.OTP;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +31,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
-// 3. Đăng ký MemoryCache & các Services (Tầng nghiệp vụ)
+// 3. Đăng ký MemoryCache & các Services
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
@@ -59,6 +61,30 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(authHeader))
+            {
+                var token = authHeader.Trim();
+                while (token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    token = token.Substring(7).Trim();
+                }
+                token = token.Trim('"').Trim('\'');
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"\n[JWT AUTH FAILED] Lỗi xác thực token: {context.Exception.Message}\n");
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddControllers();
@@ -72,7 +98,7 @@ builder.Services.AddSwaggerGen(c =>
     var securityScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Description = "Nhập JWT token theo định dạng: Bearer {token}",
+        Description = "Dán trực tiếp chuỗi JWT Token vào đây",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
@@ -80,12 +106,9 @@ builder.Services.AddSwaggerGen(c =>
     };
 
     c.AddSecurityDefinition("Bearer", securityScheme);
-    c.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecuritySchemeReference("Bearer"),
-            new List<string>()
-        }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
     });
 });
 

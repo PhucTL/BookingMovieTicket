@@ -79,6 +79,16 @@ namespace BookingMovieTicket_Repository.Repositories
         }
 
         /// <summary>
+        /// Tìm người dùng theo Id (lấy từ Claims trong Bearer Token)
+        /// </summary>
+        public async Task<User?> GetUserByIdAsync(Guid id)
+        {
+            return await context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+
+        /// <summary>
         /// Cập nhật thông tin người dùng (đổi mật khẩu, cập nhật profile,...)
         /// </summary>
         public async Task<User> UpdateUserAsync(User user)

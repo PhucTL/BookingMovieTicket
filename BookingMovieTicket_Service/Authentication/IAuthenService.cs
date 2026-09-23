@@ -21,6 +21,15 @@ namespace BookingMovieTicket_Service.Authentication
 
         // 5. Đăng nhập Google
         Task<ApiResponse<LoginResponse>> GoogleLoginAsync(GoogleLoginRequest request);
+
+        // 6. Quên mật khẩu - kiểm tra email và tự động gửi mã OTP
+        Task<ApiResponse<string>> ForgotPasswordAsync(ForgotPasswordRequest request);
+
+        // 7. Đặt lại mật khẩu mới sau khi xác thực OTP thành công (không cần mật khẩu cũ)
+        Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordRequest request);
+
+        // 8. Đổi mật khẩu tài khoản
+        Task<ApiResponse<string>> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
     }
 }
 

@@ -130,7 +130,7 @@ namespace BookingMovieTicket_API.Controllers
         }
 
         /// <summary>
-        /// 6. Lấy thông tin tài khoản hiện tại (Yêu cầu gửi Bearer Token qua Header Authorization)
+        /// 6. Lấy thông tin tài khoản hiện tại 
         /// </summary>
         [HttpGet("profile")]
         [Authorize]
@@ -151,6 +151,83 @@ namespace BookingMovieTicket_API.Controllers
                 Email = email,
                 Role = role
             });
+        }
+
+        /// <summary>
+        /// 7. Quên mật khẩu
+        /// </summary>
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResult("Dữ liệu không hợp lệ."));
+            }
+
+            var result = await _authenService.ForgotPasswordAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 8. Đặt lại mật khẩu mới 
+        /// </summary>
+        [HttpPost("reset-password")]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResult("Dữ liệu không hợp lệ."));
+            }
+
+            var result = await _authenService.ResetPasswordAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 9. Đổi mật khẩu tài khoản
+        /// </summary>
+        [HttpPost("change-password")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResult("Dữ liệu không hợp lệ."));
+            }
+
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                              ?? User.FindFirst("sub")?.Value
+                              ?? User.FindFirst("userId")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(ApiResponse<string>.ErrorResult("Không thể xác thực người dùng."));
+            }
+
+            var result = await _authenService.ChangePasswordAsync(userId, request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
     }
 }

@@ -23,9 +23,13 @@ namespace BookingMovieTicket_Repository.Interfaces
         Task<User> CreateUserAsync(User user);
 
         /// <summary>
+        /// Tìm người dùng theo Id (lấy từ Claims trong Bearer Token)
+        /// </summary>
+        Task<User?> GetUserByIdAsync(Guid id);
+
+        /// <summary>
         /// Cập nhật thông tin người dùng (dùng cho verify email, change password, etc.)
         /// </summary>
         Task<User> UpdateUserAsync(User user);
-
     }
 }
