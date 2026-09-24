@@ -30,6 +30,9 @@ namespace BookingMovieTicket_Service.Authentication
 
         // 8. Đổi mật khẩu tài khoản
         Task<ApiResponse<string>> ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
+
+        // 9. Đăng xuất tài khoản
+        Task<ApiResponse<string>> LogoutAsync(Guid userId);
     }
 }
 

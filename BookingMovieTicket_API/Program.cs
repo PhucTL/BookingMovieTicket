@@ -1,4 +1,5 @@
 using BookingMovieTicket.Contracts.Common;
+using BookingMovieTicket.Contracts.Constants;
 using BookingMovieTicket_Repository;
 using BookingMovieTicket_Repository.Basic;
 using BookingMovieTicket_Repository.DBContext;
@@ -137,6 +138,12 @@ builder.Services.AddAuthentication(options =>
             }
         }
     };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("StaffOnly", policy => policy.RequireRole(RoleConstants.Staff, "1"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole(RoleConstants.User, "0"));
 });
 
 builder.Services.AddControllers();

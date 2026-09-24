@@ -16,7 +16,7 @@ public interface IRedisService
     Task<string?> GetUserSessionAsync(string userId);
 
     /// <summary>
-    /// Xóa phiên đăng nhập của người dùng khỏi Redis (khi logout hoặc đổi mật khẩu)
+    /// Xóa phiên đăng nhập của người dùng khỏi Redis
     /// </summary>
     Task RemoveUserSessionAsync(string userId);
 }

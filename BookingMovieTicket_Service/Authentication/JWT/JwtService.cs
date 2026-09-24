@@ -34,6 +34,10 @@ public class JwtService : IJwtService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+        var roleName = Enum.IsDefined(typeof(BookingMovieTicket.Contracts.Enums.UserRole), role)
+            ? ((BookingMovieTicket.Contracts.Enums.UserRole)role).ToString()
+            : role.ToString();
+
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
@@ -41,7 +45,9 @@ public class JwtService : IJwtService
             new Claim("userId", userId.ToString()),
             new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(username) ? email : username),
             new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, role.ToString()),
+            new Claim(ClaimTypes.Role, roleName), // "User" hoặc "Staff"
+            new Claim(ClaimTypes.Role, role.ToString()), // "0" hoặc "1" (tương thích ngược)
+            new Claim("roleId", role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, jti)
         };
 

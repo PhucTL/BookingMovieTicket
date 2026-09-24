@@ -25,5 +25,10 @@ public class LoginResponse
 
     [JsonPropertyOrder(7)]
     public short Role { get; set; }
+
+    [JsonPropertyOrder(8)]
+    public string RoleName => Enum.IsDefined(typeof(BookingMovieTicket.Contracts.Enums.UserRole), Role)
+        ? ((BookingMovieTicket.Contracts.Enums.UserRole)Role).ToString()
+        : Role.ToString();
 }
 

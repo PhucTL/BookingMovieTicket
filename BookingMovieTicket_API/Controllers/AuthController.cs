@@ -1,4 +1,5 @@
 using BookingMovieTicket.Contracts.Common;
+using BookingMovieTicket.Contracts.Constants;
 using BookingMovieTicket.Contracts.DTOs.Authentication.Request;
 using BookingMovieTicket.Contracts.DTOs.Authentication.Response;
 using BookingMovieTicket_Service.Authentication;
@@ -142,6 +143,7 @@ namespace BookingMovieTicket_API.Controllers
             var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
             var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
             var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var roleId = User.FindFirst("roleId")?.Value;
 
             return Ok(new
             {
@@ -149,7 +151,8 @@ namespace BookingMovieTicket_API.Controllers
                 UserId = userId,
                 Username = username,
                 Email = email,
-                Role = role
+                Role = role,
+                RoleId = roleId
             });
         }
 
@@ -228,6 +231,41 @@ namespace BookingMovieTicket_API.Controllers
             }
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// 10. Đăng xuất tài khoản 
+        /// </summary>
+        [HttpPost("logout")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Logout()
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                              ?? User.FindFirst("sub")?.Value
+                              ?? User.FindFirst("userId")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized(ApiResponse<string>.ErrorResult("Không thể xác thực người dùng."));
+            }
+
+            var result = await _authenService.LogoutAsync(userId);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// 11. Endpoint thử nghiệm phân quyền dành riêng cho Nhân viên (Staff)
+        /// </summary>
+        [HttpGet("staff/check-permission")]
+        [Authorize(Roles = RoleConstants.Staff)]
+        [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public IActionResult StaffPermissionCheck()
+        {
+            var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+            return Ok(ApiResponse<string>.SuccessResult($"Xin chào nhân viên {username}! Bạn có quyền truy cập khu vực quản lý rạp chiếu."));
         }
     }
 }

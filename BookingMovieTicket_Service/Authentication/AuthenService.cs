@@ -41,14 +41,12 @@ namespace BookingMovieTicket_Service.Authentication
         // 1. Đăng ký tài khoản 
         public async Task<ApiResponse<string>> RegisterAsync(RegisterRequest request)
         {
-            // Kiểm tra Username đã tồn tại trong DB chưa
             var existingUsername = await _unitOfWork.AuthenRepository.GetUserByUsernameAsync(request.Username);
             if (existingUsername != null)
             {
                 return ApiResponse<string>.ErrorResult("Username này đã được sử dụng.");
             }
 
-            // Kiểm tra Email đã tồn tại trong DB chưa
             var existingEmail = await _unitOfWork.AuthenRepository.GetUserByEmailAsync(request.Email);
             if (existingEmail != null)
             {
@@ -58,7 +56,7 @@ namespace BookingMovieTicket_Service.Authentication
             // Sinh mã OTP
             var otp = _otpService.GenerateOtp();
 
-            // Lưu thông tin đăng ký cùng OTP vào cache trong 5 phút
+            // Lưu thông tin đăng ký cùng OTP 
             _otpService.SaveRegistrationOtp(request, otp, 5);
 
             // Gửi OTP tới Gmail người dùng
@@ -305,25 +303,24 @@ namespace BookingMovieTicket_Service.Authentication
             return ApiResponse<LoginResponse>.SuccessResult(authResponse, "Đăng nhập Google thành công.");
         }
 
-        // 6. Quên mật khẩu - kiểm tra email và tự động gửi mã OTP
+        // 6. Quên mật khẩu 
         public async Task<ApiResponse<string>> ForgotPasswordAsync(ForgotPasswordRequest request)
         {
             var normalizedEmail = request.Email.Trim().ToLower();
 
-            // Kiểm tra tài khoản có tồn tại trong hệ thống không
+            // Kiểm tra tài khoản có tồn tại không
             var user = await _unitOfWork.AuthenRepository.GetUserByEmailAsync(normalizedEmail);
             if (user == null)
             {
                 return ApiResponse<string>.ErrorResult("Email này không tồn tại trong hệ thống.");
             }
 
-            // Kiểm tra cooldown giãn cách 60 giây chống spam gửi liên tục
             if (!_otpService.CanResendOtp(normalizedEmail, out var remainingSeconds))
             {
                 return ApiResponse<string>.ErrorResult($"Vui lòng chờ {remainingSeconds} giây trước khi yêu cầu gửi lại mã OTP.");
             }
 
-            // Sinh mã OTP 6 số ngẫu nhiên
+            // Sinh mã OTP 6 số
             var otp = _otpService.GenerateOtp();
 
             // Lưu thông tin chờ OTP vào MemoryCache (5 phút)
@@ -337,12 +334,12 @@ namespace BookingMovieTicket_Service.Authentication
                 "Gửi mã OTP thành công. Vui lòng kiểm tra hộp thư email.");
         }
 
-        // 7. Đặt lại mật khẩu mới cho Forgot Password sau khi đã xác thực OTP thành công
+        // 7. Đặt lại mật khẩu mới cho Forgot Password 
         public async Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordRequest request)
         {
             var normalizedEmail = request.Email.Trim().ToLower();
 
-            // Kiểm tra phiên xác thực OTP có hợp lệ không (đã verify OTP trong vòng 10 phút)
+            // Kiểm tra phiên xác thực OTP có hợp lệ không
             if (!_otpService.ValidateResetSession(normalizedEmail, request.ResetToken))
             {
                 return ApiResponse<string>.ErrorResult("Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng thực hiện lại từ bước Quên mật khẩu và Xác thực OTP.");
@@ -355,14 +352,14 @@ namespace BookingMovieTicket_Service.Authentication
                 return ApiResponse<string>.ErrorResult("Không tìm thấy thông tin tài khoản.");
             }
 
-            // Cập nhật mật khẩu mới đã băm bằng BCrypt
+            // Cập nhật mật khẩu mới
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
             await _unitOfWork.AuthenRepository.UpdateUserAsync(user);
 
-            // Xóa phiên reset mật khẩu để không thể tái sử dụng
+            // Xóa phiên reset mật khẩu 
             _otpService.RemoveResetSession(normalizedEmail);
 
-            // Thu hồi session đăng nhập cũ trên Redis nếu có
+            // Thu hồi session đăng nhập cũ trên Redis
             await _redisService.RemoveUserSessionAsync(user.Id.ToString());
 
             return ApiResponse<string>.SuccessResult(
@@ -400,6 +397,13 @@ namespace BookingMovieTicket_Service.Authentication
             await _redisService.RemoveUserSessionAsync(userId.ToString());
 
             return ApiResponse<string>.SuccessResult("Đổi mật khẩu thành công. Vui lòng đăng nhập lại bằng mật khẩu mới.", "Thành công.");
+        }
+
+        // 9. Đăng xuất tài khoản
+        public async Task<ApiResponse<string>> LogoutAsync(Guid userId)
+        {
+            await _redisService.RemoveUserSessionAsync(userId.ToString());
+            return ApiResponse<string>.SuccessResult("Đăng xuất thành công. Phiên đăng nhập đã bị vô hiệu hóa.", "Thành công.");
         }
     }
 }
