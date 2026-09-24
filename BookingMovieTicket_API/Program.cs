@@ -1,3 +1,4 @@
+using BookingMovieTicket.Contracts.Common;
 using BookingMovieTicket_Repository;
 using BookingMovieTicket_Repository.Basic;
 using BookingMovieTicket_Repository.DBContext;
@@ -7,12 +8,16 @@ using BookingMovieTicket_Service.Authentication;
 using BookingMovieTicket_Service.Authentication.Email;
 using BookingMovieTicket_Service.Authentication.JWT;
 using BookingMovieTicket_Service.Authentication.OTP;
+using BookingMovieTicket_Service.Redis;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using StackExchange.Redis;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,8 +36,22 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
-// 3. Đăng ký MemoryCache & các Services
+// 3. Đăng ký MemoryCache, Redis & các Services
 builder.Services.AddMemoryCache();
+
+// Cấu hình Redis Connection & RedisService
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis")
+                            ?? builder.Configuration["Redis:ConnectionString"]
+                            ?? "localhost:6379";
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = ConfigurationOptions.Parse(redisConnectionString);
+    config.AbortOnConnectFail = false;
+    return ConnectionMultiplexer.Connect(config);
+});
+builder.Services.AddScoped<IRedisService, RedisService>();
+
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -79,10 +98,43 @@ builder.Services.AddAuthentication(options =>
             }
             return Task.CompletedTask;
         },
+        OnTokenValidated = async context =>
+        {
+            var redisService = context.HttpContext.RequestServices.GetRequiredService<IRedisService>();
+            var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? context.Principal?.FindFirst("userId")?.Value
+                         ?? context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+
+            if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(jti))
+            {
+                var activeJti = await redisService.GetUserSessionAsync(userId);
+                // Nếu Redis đang có active session và JTI không khớp => Đã đăng nhập ở nơi khác => Đá ra
+                if (!string.IsNullOrEmpty(activeJti) && activeJti != jti)
+                {
+                    context.Fail("Tài khoản của bạn đã được đăng nhập ở thiết bị khác. Phiên đăng nhập này đã bị kết thúc.");
+                }
+            }
+        },
         OnAuthenticationFailed = context =>
         {
             Console.WriteLine($"\n[JWT AUTH FAILED] Lỗi xác thực token: {context.Exception.Message}\n");
             return Task.CompletedTask;
+        },
+        OnChallenge = async context =>
+        {
+            // Trả về JSON thông báo lỗi khi bị đá tài khoản hoặc xác thực thất bại
+            if (context.AuthenticateFailure != null)
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json; charset=utf-8";
+
+                var message = context.AuthenticateFailure.Message;
+                var apiResponse = ApiResponse<string>.ErrorResult(message);
+                var json = System.Text.Json.JsonSerializer.Serialize(apiResponse);
+                await context.Response.WriteAsync(json);
+            }
         }
     };
 });

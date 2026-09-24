@@ -19,10 +19,17 @@ public class JwtService : IJwtService
 
     public string GenerateToken(Guid userId, string username, string email, short role)
     {
+        return GenerateTokenWithJti(userId, username, email, role).Token;
+    }
+
+    public (string Token, string Jti) GenerateTokenWithJti(Guid userId, string username, string email, short role)
+    {
         var secretKey = _configuration["Jwt:Key"] ?? "BookingMovieTicket_SuperSecretKey_2026_Secure_Key_!@#$%";
         var issuer = _configuration["Jwt:Issuer"] ?? "BookingMovieTicketAPI";
         var audience = _configuration["Jwt:Audience"] ?? "BookingMovieTicketClient";
         var expireMinutes = double.TryParse(_configuration["Jwt:ExpireMinutes"], out var exp) ? exp : 60;
+
+        var jti = Guid.NewGuid().ToString();
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -35,7 +42,7 @@ public class JwtService : IJwtService
             new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(username) ? email : username),
             new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Role, role.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, jti)
         };
 
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -49,7 +56,7 @@ public class JwtService : IJwtService
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
+        return (tokenHandler.WriteToken(token), jti);
     }
 }
 

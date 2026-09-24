@@ -6,6 +6,8 @@ using BookingMovieTicket_Repository.Interfaces;
 using BookingMovieTicket_Service.Authentication.Email;
 using BookingMovieTicket_Service.Authentication.JWT;
 using BookingMovieTicket_Service.Authentication.OTP;
+using BookingMovieTicket_Service.Redis;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 
@@ -17,17 +19,23 @@ namespace BookingMovieTicket_Service.Authentication
         private readonly IJwtService _jwtService;
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
+        private readonly IRedisService _redisService;
+        private readonly IConfiguration _configuration;
 
         public AuthenService(
             IUnitOfWork unitOfWork,
             IJwtService jwtService,
             IEmailService emailService,
-            IOtpService otpService)
+            IOtpService otpService,
+            IRedisService redisService,
+            IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _jwtService = jwtService;
             _emailService = emailService;
             _otpService = otpService;
+            _redisService = redisService;
+            _configuration = configuration;
         }
 
         // 1. Đăng ký tài khoản 
@@ -159,7 +167,12 @@ namespace BookingMovieTicket_Service.Authentication
 
                 _otpService.RemoveLoginOtp(normalizedEmail);
 
-                var token = _jwtService.GenerateToken(pendingLogin.User.Id, pendingLogin.User.Username ?? pendingLogin.User.Email, pendingLogin.User.Email, pendingLogin.User.Role);
+                var (token, jti) = _jwtService.GenerateTokenWithJti(pendingLogin.User.Id, pendingLogin.User.Username ?? pendingLogin.User.Email, pendingLogin.User.Email, pendingLogin.User.Role);
+
+                // Lưu active session vào Redis để đá phiên đăng nhập cũ
+                var expireMinutes = double.TryParse(_configuration["Jwt:ExpireMinutes"], out var exp) ? exp : 60;
+                await _redisService.SetUserSessionAsync(pendingLogin.User.Id.ToString(), jti, TimeSpan.FromMinutes(expireMinutes));
+
                 var loginResponse = new LoginResponse
                 {
                     Token = token,
@@ -272,7 +285,11 @@ namespace BookingMovieTicket_Service.Authentication
                 user = await _unitOfWork.AuthenRepository.CreateUserAsync(newUser);
             }
 
-            var token = _jwtService.GenerateToken(user.Id, user.Username ?? user.Email, user.Email, user.Role);
+            var (token, jti) = _jwtService.GenerateTokenWithJti(user.Id, user.Username ?? user.Email, user.Email, user.Role);
+
+            // Lưu active session vào Redis để đá phiên đăng nhập cũ
+            var expireMinutes = double.TryParse(_configuration["Jwt:ExpireMinutes"], out var exp) ? exp : 60;
+            await _redisService.SetUserSessionAsync(user.Id.ToString(), jti, TimeSpan.FromMinutes(expireMinutes));
 
             var authResponse = new LoginResponse
             {
@@ -345,6 +362,9 @@ namespace BookingMovieTicket_Service.Authentication
             // Xóa phiên reset mật khẩu để không thể tái sử dụng
             _otpService.RemoveResetSession(normalizedEmail);
 
+            // Thu hồi session đăng nhập cũ trên Redis nếu có
+            await _redisService.RemoveUserSessionAsync(user.Id.ToString());
+
             return ApiResponse<string>.SuccessResult(
                 "Mật khẩu của bạn đã được đặt lại thành công. Bạn có thể sử dụng mật khẩu mới để đăng nhập.",
                 "Đặt lại mật khẩu thành công.");
@@ -376,7 +396,10 @@ namespace BookingMovieTicket_Service.Authentication
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
             await _unitOfWork.AuthenRepository.UpdateUserAsync(user);
 
-            return ApiResponse<string>.SuccessResult("Đổi mật khẩu thành công.", "Thành công.");
+            // Thu hồi phiên đăng nhập cũ trên Redis để buộc đăng nhập lại
+            await _redisService.RemoveUserSessionAsync(userId.ToString());
+
+            return ApiResponse<string>.SuccessResult("Đổi mật khẩu thành công. Vui lòng đăng nhập lại bằng mật khẩu mới.", "Thành công.");
         }
     }
 }
