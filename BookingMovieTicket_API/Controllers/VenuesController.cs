@@ -1,4 +1,5 @@
 using BookingMovieTicket.Contracts.Common;
+using BookingMovieTicket.Contracts.Constants;
 using BookingMovieTicket.Contracts.DTOs.Venue.Request;
 using BookingMovieTicket.Contracts.DTOs.Venue.Response;
 using BookingMovieTicket_Service.Venue;
@@ -57,7 +58,7 @@ public class VenuesController : ControllerBase
     /// Staff/Admin tạo rạp mới
     /// </summary>
     [HttpPost]
-    [Authorize(Policy = "StaffOnly")]
+    [Authorize(Roles = RoleConstants.Staff)]
     [ProducesResponseType(typeof(ApiResponse<VenueResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<VenueResponse>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -83,7 +84,7 @@ public class VenuesController : ControllerBase
     /// ID Rạp
     /// Thông tin cần cập nhật
     [HttpPut("{id}")]
-    [Authorize(Policy = "StaffOnly")]
+    [Authorize(Roles = RoleConstants.Staff)]
     [ProducesResponseType(typeof(ApiResponse<VenueResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<VenueResponse>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -108,7 +109,7 @@ public class VenuesController : ControllerBase
     /// </summary>
     /// ID Rạp
     [HttpDelete("{id}")]
-    [Authorize(Policy = "StaffOnly")]
+    [Authorize(Roles = RoleConstants.Staff)]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

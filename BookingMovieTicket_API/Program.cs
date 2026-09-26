@@ -13,6 +13,7 @@ using BookingMovieTicket_Service.Authentication.JWT;
 using BookingMovieTicket_Service.Authentication.OTP;
 using BookingMovieTicket_Service.BackgroundJobs;
 using BookingMovieTicket_Service.Booking;
+using BookingMovieTicket_Service.Event;
 using BookingMovieTicket_Service.Realtime;
 using BookingMovieTicket_Service.Redis;
 using BookingMovieTicket_Service.Showtime;
@@ -46,6 +47,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
 // 3. Đăng ký MemoryCache, Redis & các Services
@@ -71,6 +73,7 @@ builder.Services.AddScoped<IAuthenService, AuthenService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IVenueService, VenueService>();
+builder.Services.AddScoped<IEventService, EventService>();
 
 // Đăng ký SignalR kèm Redis Backplane để scale-out phân tán
 builder.Services.AddSignalR()

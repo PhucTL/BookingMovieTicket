@@ -40,6 +40,12 @@ namespace BookingMovieTicket_Repository
             get => _venueRepository ??= new VenueRepository(_context);
         }
 
+        private EventRepository? _eventRepository;
+        public IEventRepository EventRepository
+        {
+            get => _eventRepository ??= new EventRepository(_context);
+        }
+
         public async System.Threading.Tasks.Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
