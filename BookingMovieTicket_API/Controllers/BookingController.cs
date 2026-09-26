@@ -22,7 +22,7 @@ public class BookingController : ControllerBase
     }
 
     /// <summary>
-    /// Giữ ghế tạm thời trong 5 phút để chuẩn bị thanh toán (Bảo vệ bằng Redis Distributed Lock)
+    /// Giữ ghế tạm thời trong 5 phút để chuẩn bị thanh toán 
     /// </summary>
     [HttpPost("hold-seats")]
     [Authorize]
@@ -55,7 +55,7 @@ public class BookingController : ControllerBase
     }
 
     /// <summary>
-    /// Người dùng chủ động hủy/nhả các ghế đang giữ
+    /// Người dùng nhả ghế đang giữ
     /// </summary>
     [HttpPost("release-seats")]
     [Authorize]
@@ -88,7 +88,7 @@ public class BookingController : ControllerBase
     }
 
     /// <summary>
-    /// Kích hoạt thủ công tiến trình quét và giải phóng các ghế giữ tạm thời đã hết hạn 5 phút (Mặc định được Hangfire tự động chạy ngầm mỗi phút)
+    /// Giải phóng các ghế giữ tạm thời đã hết hạn 5 phút
     /// </summary>
     [HttpPost("cleanup-expired-seats")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]

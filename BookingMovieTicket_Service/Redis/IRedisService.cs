@@ -36,12 +36,12 @@ public interface IRedisService
     Task RemoveCacheAsync(string key);
 
     /// <summary>
-    /// Chiếm Distributed Lock nguyên tử trên Redis (dùng SET NX PX)
+    /// Chiếm Distributed Lock nguyên tử trên Redis
     /// </summary>
     Task<bool> AcquireLockAsync(string lockKey, string lockValue, TimeSpan expiry);
 
     /// <summary>
-    /// Giải phóng Distributed Lock an toàn bằng Lua Script (chỉ xóa nếu lockValue khớp)
+    /// Giải phóng Distributed Lock
     /// </summary>
     Task<bool> ReleaseLockAsync(string lockKey, string lockValue);
 }

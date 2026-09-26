@@ -17,6 +17,11 @@ namespace BookingMovieTicket_Repository.Interfaces
         IShowtimeRepository ShowtimeRepository { get; }
 
         /// <summary>
+        /// Repository xử lý Rạp chiếu (Venue)
+        /// </summary>
+        IVenueRepository VenueRepository { get; }
+
+        /// <summary>
         /// Lưu tất cả thay đổi vào Database
         /// </summary>
         System.Threading.Tasks.Task<int> SaveChangesAsync();

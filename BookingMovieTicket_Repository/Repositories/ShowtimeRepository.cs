@@ -18,6 +18,9 @@ public class ShowtimeRepository : IShowtimeRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Tìm 
+    /// </summary>
     public async Task<Showtime?> GetShowtimeWithDetailsAsync(Guid showtimeId)
     {
         return await _context.Showtimes
@@ -30,6 +33,9 @@ public class ShowtimeRepository : IShowtimeRepository
             .FirstOrDefaultAsync(s => s.Id == showtimeId);
     }
 
+    /// <summary>
+    /// Tìm kiếm showtime theo Id, nhưng không bao gồm danh sách ghế
+    /// </summary>
     public async Task<Showtime?> GetShowtimeByIdAsync(Guid showtimeId)
     {
         return await _context.Showtimes

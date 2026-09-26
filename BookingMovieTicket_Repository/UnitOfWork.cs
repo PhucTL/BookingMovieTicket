@@ -13,6 +13,7 @@ namespace BookingMovieTicket_Repository
         private readonly BookingMovieTicketSystemDbContext _context;
         private AuthenRepository? _authenRepository;
         private ShowtimeRepository? _showtimeRepository;
+        private VenueRepository? _venueRepository;
 
         public UnitOfWork()
         {
@@ -32,6 +33,11 @@ namespace BookingMovieTicket_Repository
         public IShowtimeRepository ShowtimeRepository
         {
             get => _showtimeRepository ??= new ShowtimeRepository(_context);
+        }
+
+        public IVenueRepository VenueRepository
+        {
+            get => _venueRepository ??= new VenueRepository(_context);
         }
 
         public async System.Threading.Tasks.Task<int> SaveChangesAsync()

@@ -16,6 +16,7 @@ using BookingMovieTicket_Service.Booking;
 using BookingMovieTicket_Service.Realtime;
 using BookingMovieTicket_Service.Redis;
 using BookingMovieTicket_Service.Showtime;
+using BookingMovieTicket_Service.Venue;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -44,6 +45,7 @@ builder.Services.AddDbContext<BookingMovieTicketSystemDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
 builder.Services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
+builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
 // 3. Đăng ký MemoryCache, Redis & các Services
@@ -68,6 +70,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthenService, AuthenService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IVenueService, VenueService>();
 
 // Đăng ký SignalR kèm Redis Backplane để scale-out phân tán
 builder.Services.AddSignalR()

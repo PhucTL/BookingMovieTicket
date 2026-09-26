@@ -9,7 +9,7 @@ namespace BookingMovieTicket_Service.Booking;
 public interface IBookingService
 {
     /// <summary>
-    /// Giữ ghế tạm thời (5 phút) với cơ chế Redis Distributed Lock chống tranh chấp đồng thời
+    /// Giữ ghế tạm thời (5 phút) 
     /// </summary>
     Task<ApiResponse<HoldSeatsResponse>> HoldSeatsAsync(Guid userId, HoldSeatsRequest request);
 

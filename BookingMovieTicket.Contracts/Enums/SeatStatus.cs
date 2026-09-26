@@ -13,10 +13,5 @@ namespace BookingMovieTicket.Contracts.Enums
         Held = 1,
         Booked = 2,
         Disabled = 3,
-
-        available = 0,
-        held = 1,
-        booked = 2,
-        disabled = 3
     }
 }

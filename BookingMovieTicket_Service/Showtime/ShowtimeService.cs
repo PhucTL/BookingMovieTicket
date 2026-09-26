@@ -28,11 +28,10 @@ public class ShowtimeService : IShowtimeService
         var cached = await _redisService.GetCacheAsync<ShowtimeSeatMapResponse>(cacheKey);
         if (cached != null)
         {
-            // Cập nhật trạng thái IsHeldByMe động theo currentUserId đang gọi
+            // Cập nhật trạng thái Seat
             if (currentUserId.HasValue)
             {
                 // Nếu có user đăng nhập, kiểm tra lại cờ IsHeldByMe
-                // (Vì cache dùng chung cho tất cả mọi người nên IsHeldByMe trong cache mặc định là false)
             }
             return ApiResponse<ShowtimeSeatMapResponse>.SuccessResult(cached, "Lấy sơ đồ ghế từ cache thành công.");
         }
@@ -106,7 +105,7 @@ public class ShowtimeService : IShowtimeService
             Seats = seatDtos
         };
 
-        // 3. Lưu vào Redis Cache trong 10 giây (đảm bảo giảm tải DB trong các đợt mở bán vé cao điểm)
+        // 3. Lưu vào Redis Cache trong 10 giây 
         await _redisService.SetCacheAsync(cacheKey, response, TimeSpan.FromSeconds(10));
 
         return ApiResponse<ShowtimeSeatMapResponse>.SuccessResult(response, "Lấy sơ đồ ghế thành công.");

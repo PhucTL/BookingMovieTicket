@@ -53,7 +53,7 @@ public class BookingService : IBookingService
         // 1. Chuẩn bị chiếm Redis Distributed Lock cho từng ghế trong danh sách
         var lockValue = Guid.NewGuid().ToString();
         var acquiredLockKeys = new List<string>();
-        var lockExpiry = TimeSpan.FromSeconds(5); // Khóa trong 5s để bảo vệ giao dịch DB
+        var lockExpiry = TimeSpan.FromSeconds(5);
 
         try
         {
@@ -72,7 +72,7 @@ public class BookingService : IBookingService
                 acquiredLockKeys.Add(lockKey);
             }
 
-            // 2. Đã chiếm toàn bộ Lock -> Bắt đầu kiểm tra dữ liệu trong DB
+            // 2. Kiểm tra ghế có tồn tại hay không
             var seats = await _unitOfWork.ShowtimeRepository.GetShowtimeSeatsByIdsAsync(request.ShowtimeId, distinctSeatIds);
 
             if (seats.Count != distinctSeatIds.Count)
@@ -97,7 +97,7 @@ public class BookingService : IBookingService
                     return ApiResponse<HoldSeatsResponse>.ErrorResult($"Ghế {seatCode} hiện không mở bán.");
                 }
 
-                // Nếu ghế đang bị giữ bởi người khác và chưa hết hạn 5 phút
+                // Kiểm tra xem ghế có đang được giữ bởi người khác hay không
                 var isHeldByOther = seat.Status == (short)SeatStatus.Held
                                     && seat.HeldUntil.HasValue
                                     && seat.HeldUntil.Value > now
@@ -109,7 +109,7 @@ public class BookingService : IBookingService
                 }
             }
 
-            // 4. Tất cả ghế đều hợp lệ -> Chuyển sang trạng thái Held trong 5 phút
+            // 4. Chuyển trạng thái các ghế sang Held và lưu thông tin giữ chỗ
             var holdMinutes = 5;
             var heldUntil = now.AddMinutes(holdMinutes);
 
@@ -150,7 +150,7 @@ public class BookingService : IBookingService
         }
         finally
         {
-            // 6. Luôn giải phóng toàn bộ Redis Distributed Lock sau khi hoàn tất
+            // 6. Giải phóng toàn bộ Redis Distributed Lock sau khi hoàn tất
             foreach (var lockKey in acquiredLockKeys)
             {
                 await _redisService.ReleaseLockAsync(lockKey, lockValue);
