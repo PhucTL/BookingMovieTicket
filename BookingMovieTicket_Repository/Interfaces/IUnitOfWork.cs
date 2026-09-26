@@ -27,6 +27,11 @@ namespace BookingMovieTicket_Repository.Interfaces
         IEventRepository EventRepository { get; }
 
         /// <summary>
+        /// Repository xử lý Sơ đồ ghế và Ghế (SeatMap & Seat)
+        /// </summary>
+        ISeatMapRepository SeatMapRepository { get; }
+
+        /// <summary>
         /// Lưu tất cả thay đổi vào Database
         /// </summary>
         System.Threading.Tasks.Task<int> SaveChangesAsync();

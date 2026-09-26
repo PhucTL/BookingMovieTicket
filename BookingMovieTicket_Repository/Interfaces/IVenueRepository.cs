@@ -8,7 +8,7 @@ namespace BookingMovieTicket_Repository.Interfaces;
 public interface IVenueRepository
 {
     /// <summary>
-    /// Lấy danh sách rạp (tìm kiếm theo tên hoặc địa chỉ)
+    /// Lấy danh sách rạp 
     /// </summary>
     Task<List<Venue>> GetAllVenuesAsync(string? search = null);
 

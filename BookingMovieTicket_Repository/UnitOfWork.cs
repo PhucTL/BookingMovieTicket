@@ -46,6 +46,12 @@ namespace BookingMovieTicket_Repository
             get => _eventRepository ??= new EventRepository(_context);
         }
 
+        private SeatMapRepository? _seatMapRepository;
+        public ISeatMapRepository SeatMapRepository
+        {
+            get => _seatMapRepository ??= new SeatMapRepository(_context);
+        }
+
         public async System.Threading.Tasks.Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();

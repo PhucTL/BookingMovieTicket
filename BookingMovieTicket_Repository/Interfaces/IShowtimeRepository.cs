@@ -48,6 +48,36 @@ public interface IShowtimeRepository
     Task<List<ShowtimeSeat>> GetExpiredHeldSeatsAsync(DateTime cutoffTime, short status = 1);
 
     /// <summary>
+    /// Lấy danh sách suất chiếu
+    /// </summary>
+    Task<List<Showtime>> GetShowtimesAsync(Guid? eventId = null, DateTime? date = null);
+
+    /// <summary>
+    /// Lấy thông tin suất chiếu có tracking để cập nhật hoặc xóa
+    /// </summary>
+    Task<Showtime?> GetShowtimeForUpdateAsync(Guid id);
+
+    /// <summary>
+    /// Thêm suất chiếu mới
+    /// </summary>
+    Task AddShowtimeAsync(Showtime showtime);
+
+    /// <summary>
+    /// Cập nhật thông tin suất chiếu
+    /// </summary>
+    Task UpdateShowtimeAsync(Showtime showtime);
+
+    /// <summary>
+    /// Xóa suất chiếu
+    /// </summary>
+    Task DeleteShowtimeAsync(Showtime showtime);
+
+    /// <summary>
+    /// Thêm danh sách ghế cho suất chiếu
+    /// </summary>
+    Task AddShowtimeSeatsRangeAsync(IEnumerable<ShowtimeSeat> seats);
+
+    /// <summary>
     /// Lưu thay đổi
     /// </summary>
     Task<int> SaveChangesAsync();

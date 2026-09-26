@@ -18,9 +18,6 @@ public class ShowtimeRepository : IShowtimeRepository
         _context = context;
     }
 
-    /// <summary>
-    /// Tìm 
-    /// </summary>
     public async Task<Showtime?> GetShowtimeWithDetailsAsync(Guid showtimeId)
     {
         return await _context.Showtimes
@@ -33,9 +30,6 @@ public class ShowtimeRepository : IShowtimeRepository
             .FirstOrDefaultAsync(s => s.Id == showtimeId);
     }
 
-    /// <summary>
-    /// Tìm kiếm showtime theo Id, nhưng không bao gồm danh sách ghế
-    /// </summary>
     public async Task<Showtime?> GetShowtimeByIdAsync(Guid showtimeId)
     {
         return await _context.Showtimes
@@ -92,6 +86,61 @@ public class ShowtimeRepository : IShowtimeRepository
                          && ss.HeldUntil != null
                          && ss.HeldUntil <= cutoffTime)
             .ToListAsync();
+    }
+
+    public async Task<List<Showtime>> GetShowtimesAsync(Guid? eventId = null, DateTime? date = null)
+    {
+        var query = _context.Showtimes
+            .AsNoTracking()
+            .Include(s => s.Event)
+                .ThenInclude(e => e.Venue)
+            .Include(s => s.SeatMap)
+            .Include(s => s.ShowtimeSeats)
+            .AsQueryable();
+
+        if (eventId.HasValue)
+        {
+            query = query.Where(s => s.EventId == eventId.Value);
+        }
+
+        if (date.HasValue)
+        {
+            var startDate = DateTime.SpecifyKind(date.Value.Date, DateTimeKind.Utc);
+            var endDate = startDate.AddDays(1);
+            query = query.Where(s => s.StartTime >= startDate && s.StartTime < endDate);
+        }
+
+        return await query.OrderBy(s => s.StartTime).ToListAsync();
+    }
+
+    public async Task<Showtime?> GetShowtimeForUpdateAsync(Guid id)
+    {
+        return await _context.Showtimes
+            .Include(s => s.Bookings)
+            .Include(s => s.ShowtimeSeats)
+            .FirstOrDefaultAsync(s => s.Id == id);
+    }
+
+    public async Task AddShowtimeAsync(Showtime showtime)
+    {
+        await _context.Showtimes.AddAsync(showtime);
+    }
+
+    public Task UpdateShowtimeAsync(Showtime showtime)
+    {
+        _context.Showtimes.Update(showtime);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteShowtimeAsync(Showtime showtime)
+    {
+        _context.Showtimes.Remove(showtime);
+        return Task.CompletedTask;
+    }
+
+    public async Task AddShowtimeSeatsRangeAsync(IEnumerable<ShowtimeSeat> seats)
+    {
+        await _context.ShowtimeSeats.AddRangeAsync(seats);
     }
 
     public async Task<int> SaveChangesAsync()
