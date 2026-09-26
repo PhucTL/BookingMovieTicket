@@ -12,6 +12,7 @@ namespace BookingMovieTicket_Repository
     {
         private readonly BookingMovieTicketSystemDbContext _context;
         private AuthenRepository? _authenRepository;
+        private ShowtimeRepository? _showtimeRepository;
 
         public UnitOfWork()
         {
@@ -26,6 +27,31 @@ namespace BookingMovieTicket_Repository
         public IAuthenRepository AuthenRepository
         {
             get => _authenRepository ??= new AuthenRepository(_context);
+        }
+
+        public IShowtimeRepository ShowtimeRepository
+        {
+            get => _showtimeRepository ??= new ShowtimeRepository(_context);
+        }
+
+        public async System.Threading.Tasks.Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
+
+        public async System.Threading.Tasks.Task BeginTransactionAsync()
+        {
+            await _context.Database.BeginTransactionAsync();
+        }
+
+        public async System.Threading.Tasks.Task CommitTransactionAsync()
+        {
+            await _context.Database.CommitTransactionAsync();
+        }
+
+        public async System.Threading.Tasks.Task RollbackTransactionAsync()
+        {
+            await _context.Database.RollbackTransactionAsync();
         }
     }
 }

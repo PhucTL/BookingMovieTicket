@@ -1,4 +1,4 @@
-﻿namespace BookingMovieTicket.Contracts.Enums
+namespace BookingMovieTicket.Contracts.Enums
 {
     /// <summary>
     /// Định nghĩa các vai trò trong hệ thống
@@ -9,10 +9,14 @@
     /// </summary>
     public enum SeatStatus : short
     {
+        Available = 0,
+        Held = 1,
+        Booked = 2,
+        Disabled = 3,
+
         available = 0,
         held = 1,
         booked = 2,
         disabled = 3
-
     }
 }

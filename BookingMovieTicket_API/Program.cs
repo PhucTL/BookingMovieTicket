@@ -5,11 +5,19 @@ using BookingMovieTicket_Repository.Basic;
 using BookingMovieTicket_Repository.DBContext;
 using BookingMovieTicket_Repository.Interfaces;
 using BookingMovieTicket_Repository.Repositories;
+using BookingMovieTicket_API.Filters;
+using BookingMovieTicket_API.Hubs;
 using BookingMovieTicket_Service.Authentication;
 using BookingMovieTicket_Service.Authentication.Email;
 using BookingMovieTicket_Service.Authentication.JWT;
 using BookingMovieTicket_Service.Authentication.OTP;
+using BookingMovieTicket_Service.BackgroundJobs;
+using BookingMovieTicket_Service.Booking;
+using BookingMovieTicket_Service.Realtime;
 using BookingMovieTicket_Service.Redis;
+using BookingMovieTicket_Service.Showtime;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +43,7 @@ builder.Services.AddDbContext<BookingMovieTicketSystemDbContext>(options =>
 // 2. Đăng ký UnitOfWork và Repositories vào DI Container
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthenRepository, AuthenRepository>();
+builder.Services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
 // 3. Đăng ký MemoryCache, Redis & các Services
@@ -57,6 +66,34 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthenService, AuthenService>();
+builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+
+// Đăng ký SignalR kèm Redis Backplane để scale-out phân tán
+builder.Services.AddSignalR()
+    .AddStackExchangeRedis(redisConnectionString, options =>
+    {
+        options.Configuration.ChannelPrefix = RedisChannel.Literal("BookingMovieTicket_SignalR");
+    });
+builder.Services.AddScoped<ISeatNotificationService, SeatNotificationService>();
+
+// 3.5. Cấu hình Hangfire Background Jobs sử dụng PostgreSQL Storage
+var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddHangfire(config =>
+{
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+          .UseSimpleAssemblyNameTypeSerializer()
+          .UseRecommendedSerializerSettings()
+          .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(defaultConnectionString));
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
+    options.WorkerCount = Environment.ProcessorCount * 2;
+});
+
+builder.Services.AddScoped<ISeatExpirationJob, SeatExpirationJob>();
 
 // 4. Cấu hình Authentication với JWT Bearer Token
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "BookingMovieTicket_SuperSecretKey_2026_Secure_Key_!@#$%";
@@ -96,6 +133,16 @@ builder.Services.AddAuthentication(options =>
                 }
                 token = token.Trim('"').Trim('\'');
                 context.Token = token;
+            }
+            else
+            {
+                // Hỗ trợ WebSocket của SignalR lấy Token từ query string ?access_token=...
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
             }
             return Task.CompletedTask;
         },
@@ -189,6 +236,21 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 6. Cấu hình Hangfire Dashboard
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter() },
+    DashboardTitle = "BookingMovieTicket - Background Jobs"
+});
+
+// Đăng ký Recurring Job tự động quét và giải phóng các ghế giữ hết hạn mỗi phút
+RecurringJob.AddOrUpdate<ISeatExpirationJob>(
+    "release-expired-seats",
+    job => job.ReleaseExpiredSeatsAsync(),
+    Cron.Minutely()
+);
+
 app.MapControllers();
+app.MapHub<SeatHub>("/hubs/seats");
 
 app.Run();
