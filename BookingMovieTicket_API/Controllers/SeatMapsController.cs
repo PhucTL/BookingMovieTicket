@@ -24,9 +24,8 @@ public class SeatMapsController : ControllerBase
     }
 
     /// <summary>
-    /// Xem cấu trúc phòng chiếu và sơ đồ ghế (rows/columns/danh sách ghế)
+    /// Xem cấu trúc phòng chiếu và sơ đồ ghế
     /// </summary>
-    /// <param name="id">Mã định danh sơ đồ ghế / phòng chiếu (Guid)</param>
     [HttpGet("{id}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<SeatMapDetailResponse>), StatusCodes.Status200OK)]
@@ -42,7 +41,7 @@ public class SeatMapsController : ControllerBase
     }
 
     /// <summary>
-    /// Staff tạo phòng chiếu mới (kèm số hàng và số cột)
+    /// Staff tạo phòng chiếu mới
     /// </summary>
     [HttpPost]
     [Authorize(Roles = RoleConstants.Staff)]
@@ -66,10 +65,8 @@ public class SeatMapsController : ControllerBase
     }
 
     /// <summary>
-    /// Staff sinh hàng loạt ghế tự động cho phòng chiếu (hỗ trợ chỉ định hàng VIP, Couple)
+    /// Staff sinh hàng loạt ghế tự động cho phòng chiếu
     /// </summary>
-    /// <param name="id">Mã định danh phòng chiếu (Guid)</param>
-    /// <param name="request">Cấu hình hàng ghế VIP/Couple và tùy chọn xóa ghế cũ</param>
     [HttpPost("{id}/seats/bulk")]
     [Authorize(Roles = RoleConstants.Staff)]
     [ProducesResponseType(typeof(ApiResponse<List<SeatResponse>>), StatusCodes.Status200OK)]

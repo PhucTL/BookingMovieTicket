@@ -22,6 +22,9 @@ public class SeatNotificationService : ISeatNotificationService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Thông báo real-time qua SignalR khi có ghế vừa được giữ tạm thời
+    /// </summary>
     public async Task NotifySeatsHeldAsync(Guid showtimeId, Guid heldByUserId, DateTime heldUntil, IEnumerable<ShowtimeSeat> seats)
     {
         try
@@ -53,6 +56,9 @@ public class SeatNotificationService : ISeatNotificationService
         }
     }
 
+    /// <summary>
+    /// Thông báo real-time qua SignalR khi có ghế vừa được nhả/giải phóng
+    /// </summary>
     public async Task NotifySeatsReleasedAsync(Guid showtimeId, IEnumerable<ShowtimeSeat> seats)
     {
         try
@@ -84,6 +90,9 @@ public class SeatNotificationService : ISeatNotificationService
         }
     }
 
+    /// <summary>
+    /// Thông báo real-time qua SignalR khi có ghế đã được thanh toán và bán thành công
+    /// </summary>
     public async Task NotifySeatsBookedAsync(Guid showtimeId, IEnumerable<ShowtimeSeat> seats)
     {
         try

@@ -33,14 +33,11 @@ public class ShowtimeService : IShowtimeService
     {
         var cacheKey = $"showtime_seatmap:{showtimeId}";
 
-        // 1. Thử lấy từ Redis Cache
         var cached = await _redisService.GetCacheAsync<ShowtimeSeatMapResponse>(cacheKey);
         if (cached != null)
         {
-            // Cập nhật trạng thái Seat
             if (currentUserId.HasValue)
             {
-                // Nếu có user đăng nhập, kiểm tra lại cờ IsHeldByMe
             }
             return ApiResponse<ShowtimeSeatMapResponse>.SuccessResult(cached, "Lấy sơ đồ ghế từ cache thành công.");
         }
@@ -59,7 +56,6 @@ public class ShowtimeService : IShowtimeService
             .ThenBy(ss => ss.Seat.Number)
             .Select(ss =>
             {
-                // Kiểm tra ghế tạm giữ (Held) nhưng đã quá hạn HeldUntil thì coi như Available
                 var isExpired = ss.Status == (short)SeatStatus.Held && ss.HeldUntil.HasValue && ss.HeldUntil.Value <= now;
                 var effectiveStatus = isExpired ? (short)SeatStatus.Available : ss.Status;
 
@@ -114,7 +110,6 @@ public class ShowtimeService : IShowtimeService
             Seats = seatDtos
         };
 
-        // 3. Lưu vào Redis Cache trong 10 giây 
         await _redisService.SetCacheAsync(cacheKey, response, TimeSpan.FromSeconds(10));
 
         return ApiResponse<ShowtimeSeatMapResponse>.SuccessResult(response, "Lấy sơ đồ ghế thành công.");
@@ -255,7 +250,6 @@ public class ShowtimeService : IShowtimeService
 
             await _unitOfWork.ShowtimeRepository.AddShowtimeAsync(showtime);
 
-            // Tự động sinh toàn bộ ShowtimeSeat từ danh sách Seat của SeatMap
             var showtimeSeats = seatMap.Seats.Select(seat =>
             {
                 decimal seatPrice = seat.SeatType switch
@@ -339,7 +333,6 @@ public class ShowtimeService : IShowtimeService
             await _unitOfWork.ShowtimeRepository.UpdateShowtimeAsync(showtime);
             await _unitOfWork.SaveChangesAsync();
 
-            // Xóa cache sơ đồ ghế trên Redis
             await InvalidateSeatMapCacheAsync(id);
 
             var updatedShowtime = await _unitOfWork.ShowtimeRepository.GetShowtimeWithDetailsAsync(id);
@@ -389,7 +382,6 @@ public class ShowtimeService : IShowtimeService
                 return ApiResponse<string>.ErrorResult("Không thể xóa suất chiếu này vì đã có vé được đặt.");
             }
 
-            // Xóa các ghế của suất chiếu trước
             if (showtime.ShowtimeSeats != null && showtime.ShowtimeSeats.Count > 0)
             {
                 foreach (var ss in showtime.ShowtimeSeats.ToList())
@@ -401,7 +393,6 @@ public class ShowtimeService : IShowtimeService
             await _unitOfWork.ShowtimeRepository.DeleteShowtimeAsync(showtime);
             await _unitOfWork.SaveChangesAsync();
 
-            // Xóa cache Redis
             await InvalidateSeatMapCacheAsync(id);
 
             return ApiResponse<string>.SuccessResult("Đã hủy/xóa suất chiếu thành công.");

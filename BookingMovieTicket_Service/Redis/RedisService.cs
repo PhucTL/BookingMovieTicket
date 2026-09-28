@@ -34,6 +34,9 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Lưu định danh phiên đăng nhập (JTI) của người dùng vào Redis kèm thời gian hết hạn (TTL)
+    /// </summary>
     public async Task SetUserSessionAsync(string userId, string jti, TimeSpan expiry)
     {
         try
@@ -50,6 +53,9 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Lấy JTI của phiên đăng nhập hiện tại từ Redis
+    /// </summary>
     public async Task<string?> GetUserSessionAsync(string userId)
     {
         try
@@ -68,6 +74,9 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Xóa phiên đăng nhập của người dùng khỏi Redis
+    /// </summary>
     public async Task RemoveUserSessionAsync(string userId)
     {
         try
@@ -84,6 +93,9 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Lưu đối tượng bất kỳ vào Redis Cache dưới dạng JSON
+    /// </summary>
     public async Task SetCacheAsync<T>(string key, T data, TimeSpan expiry)
     {
         try
@@ -100,6 +112,9 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Lấy đối tượng từ Redis Cache theo Key
+    /// </summary>
     public async Task<T?> GetCacheAsync<T>(string key)
     {
         try
@@ -119,6 +134,9 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Xóa cache theo Key
+    /// </summary>
     public async Task RemoveCacheAsync(string key)
     {
         try
@@ -134,15 +152,25 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Chiếm Distributed Lock nguyên tử trên Redis
+    /// </summary>
     public async Task<bool> AcquireLockAsync(string lockKey, string lockValue, TimeSpan expiry)
     {
         try
         {
             var db = GetDatabase();
-            if (db == null) return false;
+            if (db == null)
+            {
+                throw new InvalidOperationException("Không thể kết nối đến Redis Server (Distributed Lock). Vui lòng đảm bảo dịch vụ Redis (Docker container) đang chạy.");
+            }
 
             // SET key value NX PX (Chỉ set nếu chưa tồn tại, tự hủy sau expiry)
             return await db.StringSetAsync(lockKey, lockValue, expiry, When.NotExists);
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -151,6 +179,9 @@ public class RedisService : IRedisService
         }
     }
 
+    /// <summary>
+    /// Giải phóng Distributed Lock
+    /// </summary>
     public async Task<bool> ReleaseLockAsync(string lockKey, string lockValue)
     {
         try

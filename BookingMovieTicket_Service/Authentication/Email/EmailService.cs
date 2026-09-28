@@ -21,7 +21,7 @@ public class EmailService : IEmailService
 
     public async Task SendOtpEmailAsync(string toEmail, string otp, int expireMinutes = 5, string purpose = "xác thực tài khoản")
     {
-        // Ghi log mã OTP để nhà phát triển luôn kiểm tra và test được ngay trên Console
+        // Ghi log mã OTP để nhà phát triển luôn kiểm tra và test trên Console
         _logger.LogInformation("==================================================");
         _logger.LogInformation("[OTP NOTIFICATION] ({Purpose}) Email: {Email} | Mã OTP: {Otp} | Hết hạn sau: {ExpireMinutes} phút", purpose, toEmail, otp, expireMinutes);
         _logger.LogInformation("==================================================");
@@ -56,7 +56,7 @@ public class EmailService : IEmailService
         var senderEmail = _configuration["EmailSettings:SenderEmail"];
         var appPassword = _configuration["EmailSettings:AppPassword"];
 
-        // Nếu chưa cấu hình SenderEmail hoặc AppPassword, bỏ qua bước gửi SMTP thực tế để không crash ứng dụng khi dev
+        
         if (string.IsNullOrWhiteSpace(senderEmail) || string.IsNullOrWhiteSpace(appPassword) || appPassword.Contains("your-app-password"))
         {
             _logger.LogWarning("[EMAIL WARNING] EmailSettings chưa được cấu hình đầy đủ trong appsettings.json. Mã OTP đã được in ra console.");
@@ -77,7 +77,6 @@ public class EmailService : IEmailService
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new SmtpClient();
-            // Gmail dùng cổng 587 với StartTls
             await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(senderEmail, appPassword);
             await client.SendAsync(message);
@@ -88,7 +87,6 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "[EMAIL ERROR] Lỗi khi gửi email tới {ToEmail}: {Message}", toEmail, ex.Message);
-            // Không ném Exception ra ngoài để luồng xử lý xác thực không bị gián đoạn, mã OTP vẫn có trên log
         }
     }
 }

@@ -26,7 +26,6 @@ public class VenuesController : ControllerBase
     /// <summary>
     /// Lấy danh sách rạp chiếu (Người dùng/Khách xem danh sách rạp)
     /// </summary>
-    /// Từ khóa tìm kiếm theo tên hoặc địa chỉ (tùy chọn)
     [HttpGet]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<List<VenueResponse>>), StatusCodes.Status200OK)]
@@ -39,7 +38,6 @@ public class VenuesController : ControllerBase
     /// <summary>
     /// Chi tiết 1 rạp chiếu kèm sơ đồ ghế và sự kiện (phim) trực thuộc
     /// </summary>
-    /// ID Rạp
     [HttpGet("{id}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<VenueDetailResponse>), StatusCodes.Status200OK)]
@@ -81,8 +79,6 @@ public class VenuesController : ControllerBase
     /// <summary>
     /// Staff/Admin chỉnh sửa thông tin rạp
     /// </summary>
-    /// ID Rạp
-    /// Thông tin cần cập nhật
     [HttpPut("{id}")]
     [Authorize(Roles = RoleConstants.Staff)]
     [ProducesResponseType(typeof(ApiResponse<VenueResponse>), StatusCodes.Status200OK)]
@@ -107,7 +103,6 @@ public class VenuesController : ControllerBase
     /// <summary>
     /// Staff/Admin xóa rạp
     /// </summary>
-    /// ID Rạp
     [HttpDelete("{id}")]
     [Authorize(Roles = RoleConstants.Staff)]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]

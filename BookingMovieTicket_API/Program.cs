@@ -14,6 +14,7 @@ using BookingMovieTicket_Service.Authentication.OTP;
 using BookingMovieTicket_Service.BackgroundJobs;
 using BookingMovieTicket_Service.Booking;
 using BookingMovieTicket_Service.Event;
+using BookingMovieTicket_Service.Payment;
 using BookingMovieTicket_Service.Realtime;
 using BookingMovieTicket_Service.Redis;
 using BookingMovieTicket_Service.SeatMap;
@@ -50,6 +51,7 @@ builder.Services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<ISeatMapRepository, SeatMapRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped(typeof(GenericRepository<>));
 
 // 3. Đăng ký MemoryCache, Redis & các Services
@@ -74,6 +76,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthenService, AuthenService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<IVenueService, VenueService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ISeatMapService, SeatMapService>();
@@ -145,7 +148,6 @@ builder.Services.AddAuthentication(options =>
             }
             else
             {
-                // Hỗ trợ WebSocket của SignalR lấy Token từ query string ?access_token=...
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
                 if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
@@ -166,7 +168,6 @@ builder.Services.AddAuthentication(options =>
             if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(jti))
             {
                 var activeJti = await redisService.GetUserSessionAsync(userId);
-                // Nếu Redis đang có active session và JTI không khớp => Đã đăng nhập ở nơi khác => Đá ra
                 if (!string.IsNullOrEmpty(activeJti) && activeJti != jti)
                 {
                     context.Fail("Tài khoản của bạn đã được đăng nhập ở thiết bị khác. Phiên đăng nhập này đã bị kết thúc.");
@@ -180,7 +181,6 @@ builder.Services.AddAuthentication(options =>
         },
         OnChallenge = async context =>
         {
-            // Trả về JSON thông báo lỗi khi bị đá tài khoản hoặc xác thực thất bại
             if (context.AuthenticateFailure != null)
             {
                 context.HandleResponse();

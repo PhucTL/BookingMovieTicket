@@ -23,10 +23,8 @@ public class SeatsController : ControllerBase
     }
 
     /// <summary>
-    /// Staff sửa loại ghế của 1 ghế cụ thể (ví dụ: đổi Standard sang VIP hoặc Couple)
+    /// Staff sửa loại ghế của 1 ghế cụ thể 
     /// </summary>
-    /// <param name="id">Mã định danh ghế (Guid)</param>
-    /// <param name="request">Loại ghế mới (0 = Standard, 1 = Vip, 2 = Couple)</param>
     [HttpPut("{id}")]
     [Authorize(Roles = RoleConstants.Staff)]
     [ProducesResponseType(typeof(ApiResponse<SeatResponse>), StatusCodes.Status200OK)]

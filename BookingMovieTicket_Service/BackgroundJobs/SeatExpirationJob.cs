@@ -28,6 +28,9 @@ public class SeatExpirationJob : ISeatExpirationJob
         _logger = logger;
     }
 
+    /// <summary>
+    /// Tiến trình nền quét và giải phóng các ghế giữ tạm (Held) đã quá 5 phút mà chưa hoàn tất thanh toán
+    /// </summary>
     public async Task ReleaseExpiredSeatsAsync()
     {
         try
@@ -42,7 +45,6 @@ public class SeatExpirationJob : ISeatExpirationJob
 
             _logger.LogInformation("[Hangfire] Phát hiện {Count} ghế hết hạn giữ tạm thời cần giải phóng.", expiredSeats.Count);
 
-            // Nhóm theo từng suất chiếu để xử lý và thông báo tập trung
             var groupedByShowtime = expiredSeats.GroupBy(s => s.ShowtimeId);
 
             foreach (var group in groupedByShowtime)
@@ -62,10 +64,8 @@ public class SeatExpirationJob : ISeatExpirationJob
                     await _unitOfWork.ShowtimeRepository.UpdateShowtimeSeatsAsync(seatsToRelease);
                     await _unitOfWork.SaveChangesAsync();
 
-                    // Xóa cache Redis của sơ đồ ghế để truy vấn tiếp theo cập nhật tức thì
                     await _showtimeService.InvalidateSeatMapCacheAsync(showtimeId);
 
-                    // Bắn thông báo Real-time qua SignalR cho tất cả khách đang xem suất chiếu này
                     await _seatNotificationService.NotifySeatsReleasedAsync(showtimeId, seatsToRelease);
 
                     _logger.LogInformation("[Hangfire] Đã giải phóng thành công {Count} ghế hết hạn của Suất chiếu {ShowtimeId}.",

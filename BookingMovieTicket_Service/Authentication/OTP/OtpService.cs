@@ -22,7 +22,6 @@ public class OtpService : IOtpService
 
     public string GenerateOtp(int length = 6)
     {
-        // Sinh ngẫu nhiên OTP
         var bytes = new byte[4];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(bytes);

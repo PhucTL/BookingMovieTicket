@@ -129,7 +129,6 @@ public class SeatMapService : ISeatMapService
                 return ApiResponse<List<SeatResponse>>.ErrorResult("Không tìm thấy phòng chiếu/sơ đồ ghế với ID này.");
             }
 
-            // Nếu đã có ghế và request yêu cầu xóa để tạo lại
             if (seatMap.Seats != null && seatMap.Seats.Count > 0)
             {
                 if (request?.ClearExisting == true)
@@ -147,13 +146,11 @@ public class SeatMapService : ISeatMapService
             var vipRows = request?.VipRowLabels?.Select(r => r.Trim().ToUpper()).ToHashSet() ?? new HashSet<string>();
             var coupleRows = request?.CoupleRowLabels?.Select(r => r.Trim().ToUpper()).ToHashSet() ?? new HashSet<string>();
 
-            // Sinh tự động các hàng từ A, B, C... dựa trên Rows
             for (int r = 0; r < seatMap.Rows; r++)
             {
                 char rowChar = (char)('A' + r);
                 string rowLabel = rowChar.ToString();
 
-                // Xác định loại ghế mặc định cho hàng này
                 short seatType = (short)SeatType.Standard;
                 if (coupleRows.Contains(rowLabel))
                 {
@@ -165,7 +162,6 @@ public class SeatMapService : ISeatMapService
                 }
                 else if (request?.VipRowLabels == null && seatMap.Rows >= 5 && r >= seatMap.Rows / 3 && r <= (2 * seatMap.Rows) / 3)
                 {
-                    // Nếu không truyền danh sách cụ thể, tự động chọn các hàng đẹp ở giữa làm VIP
                     seatType = (short)SeatType.Vip;
                 }
 

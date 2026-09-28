@@ -45,8 +45,8 @@ public class JwtService : IJwtService
             new Claim("userId", userId.ToString()),
             new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(username) ? email : username),
             new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, roleName), // "User" hoặc "Staff"
-            new Claim(ClaimTypes.Role, role.ToString()), // "0" hoặc "1" (tương thích ngược)
+            new Claim(ClaimTypes.Role, roleName),
+            new Claim(ClaimTypes.Role, role.ToString()), 
             new Claim("roleId", role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, jti)
         };

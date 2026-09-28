@@ -19,9 +19,6 @@ namespace BookingMovieTicket_Repository.Repositories
             this.context = context;
         }
 
-        /// <summary>
-        /// Tạo mới người (Register)
-        /// </summary>
         public async Task<User> CreateUserAsync(User user)
         {
             if (user.Id == Guid.Empty)
@@ -29,7 +26,6 @@ namespace BookingMovieTicket_Repository.Repositories
                 user.Id = Guid.NewGuid();
             }
 
-            // PostgreSQL (Npgsql) yêu cầu DateTime ở dạng UTC khi ghi vào timestamptz
             if (user.CreatedAt == default)
             {
                 user.CreatedAt = DateTime.UtcNow;
@@ -44,9 +40,6 @@ namespace BookingMovieTicket_Repository.Repositories
             return user;
         }
 
-        /// <summary>
-        /// Tìm người dùng theo username (Login)
-        /// </summary>
         public async Task<User?> GetUserByUsernameAsync(string username)
         {
             if (string.IsNullOrWhiteSpace(username))
@@ -61,9 +54,6 @@ namespace BookingMovieTicket_Repository.Repositories
                 .FirstOrDefaultAsync(u => u.Username != null && u.Username.ToLower() == normalized);
         }
 
-        /// <summary>
-        /// Tìm người dùng theo Email
-        /// </summary>
         public async Task<User?> GetUserByEmailAsync(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -78,9 +68,6 @@ namespace BookingMovieTicket_Repository.Repositories
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == normalized);
         }
 
-        /// <summary>
-        /// Tìm người dùng theo Id (lấy từ Claims trong Bearer Token)
-        /// </summary>
         public async Task<User?> GetUserByIdAsync(Guid id)
         {
             return await context.Users
@@ -88,9 +75,6 @@ namespace BookingMovieTicket_Repository.Repositories
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        /// <summary>
-        /// Cập nhật thông tin người dùng (đổi mật khẩu, cập nhật profile,...)
-        /// </summary>
         public async Task<User> UpdateUserAsync(User user)
         {
             context.Users.Update(user);
